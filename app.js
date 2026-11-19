@@ -600,8 +600,11 @@ function initTaking() {
   $('exam-select').addEventListener('change', event => $('btn-start-exam').disabled = !event.target.value);
   $('btn-start-exam').addEventListener('click', startExam);
   $('take-exam-cards')?.addEventListener('click', event => {
-    const btn = event.target.closest('[data-take-id]');
-    if (btn) takeExam(btn.dataset.takeId);
+    const cardOrBtn = event.target.closest('[data-take-id]');
+    if (cardOrBtn) {
+      event.preventDefault();
+      takeExam(cardOrBtn.dataset.takeId);
+    }
   });
   $('btn-prev').addEventListener('click', () => navigate(-1));
   $('btn-next').addEventListener('click', () => navigate(1));
@@ -649,7 +652,7 @@ function updateExamSelect() {
         const attempts = results.filter(r => r.examId === exam.id);
         const best = attempts.length ? Math.max(...attempts.map(r => r.percent)) : null;
         return `
-          <article class="take-exam-card">
+          <article class="take-exam-card" data-take-id="${escapeAttr(exam.id)}" style="cursor:pointer">
             <div class="take-card-top">
               <span class="take-card-badge">ĐỀ LUYỆN THI B1</span>
               <h3 class="take-card-title">${escapeHtml(exam.title)}</h3>
@@ -674,7 +677,11 @@ function updateExamSelect() {
 }
 
 function startExam() {
-  const id = $('exam-select').value;
+  let id = $('exam-select').value;
+  if (!id && exams.length > 0) {
+    id = exams[0].id;
+    $('exam-select').value = id;
+  }
   if (!id) return toast('Vui lòng chọn một đề thi để bắt đầu.');
   startExamWithId(id);
 }
@@ -702,7 +709,6 @@ function startExamWithId(id) {
     currentQuestionIndex = 0;
   }
 
-  currentFilter = 'all';
   answerLocked = false;
   trueFalsePending = null;
   clozePending = null;
