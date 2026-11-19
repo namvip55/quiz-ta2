@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+  <meta name="theme-color" content="#5b45e0">
+  <title>QuizFlow — Tạo và làm đề trắc nghiệm</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="QuizFlow"><span class="brand-mark">Q</span><span>QuizFlow</span></a>
+      <p class="side-label">KHÔNG GIAN HỌC TẬP</p>
+      <nav aria-label="Điều hướng chính">
+        <button id="btn-create" class="nav-item active" data-tab="create"><span>＋</span><span>Tạo đề mới</span></button>
+        <button id="btn-take" class="nav-item" data-tab="take"><span>▶</span><span>Làm bài thi</span></button>
+        <button id="btn-manage" class="nav-item" data-tab="manage"><span>▦</span><span>Kho đề thi</span></button>
+      </nav>
+      <div class="side-tip"><span>⌨</span><div><strong>Mẹo làm bài</strong><p>Dùng phím 1–4 để chọn nhanh đáp án.</p></div></div>
+      <button id="btn-sidebar-logout" class="nav-item logout-nav" type="button"><span>🔒</span><span>Khóa / Đăng xuất</span></button>
+    </aside>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    <div class="workspace">
+      <header class="topbar">
+        <button id="mobile-menu" class="icon-btn mobile-only" aria-label="Mở menu">☰</button>
+        <div><p class="eyebrow">TRUNG TÂM LUYỆN THI</p><h1 id="page-title">Tạo đề thi</h1></div>
+        <div class="top-actions"><button id="btn-logout" class="icon-btn logout-btn" title="Khóa / Đăng xuất" aria-label="Đăng xuất">🔒</button><span id="save-status" class="save-status">● Đang mở database local...</span><div class="avatar">HS</div></div>
+      </header>
+      <main>
+        <section id="tab-create" class="tab-content active">
+          <div class="hero-row"><div><h2>Xây dựng đề thi của bạn</h2><p>Thêm câu hỏi, đáp án và thiết lập thời gian trong vài phút.</p></div><span id="draft-badge" class="pill">Bản nháp mới</span></div>
+          <form id="exam-form">
+            <div class="panel">
+              <div class="panel-head"><span class="step">1</span><div><h3>Thông tin đề thi</h3><p>Thông tin cơ bản để người học nhận biết đề.</p></div></div>
+              <div class="form-grid">
+                <label class="field span-2">Tên đề thi <b>*</b><input id="exam-title" type="text" placeholder="Ví dụ: Ôn tập Toán học kỳ I" maxlength="100" required></label>
+                <label class="field span-2">Mô tả<textarea id="exam-desc" placeholder="Nội dung, mục tiêu hoặc hướng dẫn làm bài..." maxlength="500"></textarea></label>
+                <label class="field span-2">Điểm đạt (%)<input id="exam-pass" type="number" value="50" min="0" max="100" required></label>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head between"><div class="head-group"><span class="step">2</span><div><h3>Danh sách câu hỏi</h3><p id="question-count">Chưa có câu hỏi</p></div></div><div class="question-head-actions"><button type="button" id="btn-paste-direct-fill" class="btn quick-paste">⚡ Dán điền trực tiếp</button><button type="button" id="btn-paste-cloze" class="btn quick-paste">⚡ Dán đoạn văn 10 chỗ trống</button><button type="button" id="btn-paste-true-false" class="btn quick-paste">⚡ Dán True/False 10 ý</button><button type="button" id="btn-add-question" class="btn primary">＋ Thêm câu hỏi A–D</button></div></div>
+              <div id="questions-container" class="question-list"></div>
+              <button type="button" id="empty-add" class="empty-add"><span>＋</span><strong>Thêm câu hỏi đầu tiên</strong><small>Bạn có thể thêm hình ảnh và lời giải chi tiết</small></button>
+            </div>
+            <div class="sticky-actions"><button type="button" id="btn-clear-form" class="btn ghost">Làm mới</button><button type="submit" class="btn primary">Lưu đề thi</button></div>
+          </form>
+        </section>
+        <section id="tab-take" class="tab-content">
+          <div id="exam-selector" class="select-screen">
+            <div class="hero-row"><div><h2>Sẵn sàng chinh phục?</h2><p>Chọn một đề thi và bắt đầu khi bạn đã sẵn sàng.</p></div></div>
+            <div class="panel selector-panel"><div class="selector-icon">▶</div><h3>Chọn đề thi</h3><p>Không giới hạn thời gian — làm bài theo nhịp độ của bạn.</p><select id="exam-select" aria-label="Chọn đề thi"><option value="">— Chọn một đề thi —</option></select><button id="btn-start-exam" class="btn primary wide" disabled>Bắt đầu làm bài</button></div>
+          </div>
+          <div id="exam-taking" class="hidden">
+            <div class="exam-top"><div><p class="eyebrow">ĐANG LÀM BÀI · KHÔNG GIỚI HẠN THỜI GIAN</p><h2 id="current-exam-title"></h2></div><div class="exam-top-actions"><button id="btn-toggle-answer-map" class="btn ghost mobile-map-toggle mobile-only" type="button">📋 Phiếu trả lời</button><button id="btn-exit-exam" type="button" class="btn ghost exit-exam">Thoát bài</button></div></div>
+            <div class="progress-meta"><span id="answered-count">Đã trả lời 0/0</span><span id="progress-percent">0%</span></div><div class="progress"><div id="progress-fill"></div></div>
+            <div class="exam-layout">
+              <div class="panel question-panel"><div class="question-toolbar"><span id="question-number" class="pill purple">Câu 1</span><button id="btn-flag" class="flag-btn" type="button">☆ Đánh dấu xem lại</button></div><div id="question-content" class="question-content"></div><div id="options-container" class="options"></div><div class="exam-controls"><button id="btn-prev" class="btn ghost">← Câu trước</button><div class="exam-control-right"><button id="btn-submit-top" class="btn danger" type="button">Nộp bài</button><button id="btn-next" class="btn primary">Câu tiếp →</button></div></div></div>
+              <aside class="panel answer-map"><h3>Phiếu trả lời</h3><div id="question-nav" class="question-nav"></div><div class="legend"><span><i class="answered-dot"></i>Đã làm</span><span><i class="flagged-dot"></i>Đánh dấu</span></div><button id="btn-submit" class="btn danger wide">Nộp bài</button><small>Tự động lưu tiến độ trên thiết bị này</small></aside>
+            </div>
+          </div>
+        </section>
+        <section id="tab-manage" class="tab-content">
+          <div class="hero-row"><div><h2>Kho đề thi</h2><p>Quản lý, chỉnh sửa và theo dõi kết quả học tập.</p></div><button id="manage-create" class="btn primary">＋ Tạo đề mới</button></div>
+          <div id="stats" class="stats"></div>
+          <div class="panel"><div class="list-toolbar"><div class="search-wrap">⌕ <input id="exam-search" type="search" placeholder="Tìm theo tên đề thi..."></div><button id="btn-export" class="btn ghost">Xuất dữ liệu</button><label class="btn ghost file-btn">Nhập dữ liệu<input id="import-file" type="file" accept="application/json"></label></div><div id="exam-list" class="exam-list"></div></div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div id="question-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-content question-modal-content"><div class="modal-head"><div><p class="eyebrow">NGÂN HÀNG CÂU HỎI</p><h3 id="modal-title">Thêm câu hỏi</h3></div><button id="modal-x" type="button" class="icon-btn" aria-label="Đóng">×</button></div><form id="question-form"><input type="hidden" id="question-index"><label class="field">Nội dung câu hỏi <small>Không bắt buộc</small><textarea id="q-content" placeholder="Có thể để trống..."></textarea></label><div class="upload-row"><label class="btn ghost file-btn">▧ Thêm ảnh câu hỏi<input id="q-image" type="file" accept="image/*"></label><span>Có thể dán ảnh trực tiếp bằng Ctrl+V</span></div><div id="q-image-preview" class="image-preview hidden"></div><p class="field-title">Các phương án trả lời <small>Phương án bỏ trống sẽ được ẩn khi thi</small></p><div class="answer-fields">
+    <div class="answer-editor"><label><span>A</span><input id="q-option-a" placeholder="Chữ hoặc chỉ dùng ảnh"></label><div class="answer-image-tools"><label class="mini-upload">＋ Ảnh<input id="q-option-image-a" type="file" accept="image/*"></label><div id="q-option-preview-a" class="option-image-preview hidden"></div></div></div>
+    <div class="answer-editor"><label><span>B</span><input id="q-option-b" placeholder="Chữ hoặc chỉ dùng ảnh"></label><div class="answer-image-tools"><label class="mini-upload">＋ Ảnh<input id="q-option-image-b" type="file" accept="image/*"></label><div id="q-option-preview-b" class="option-image-preview hidden"></div></div></div>
+    <div class="answer-editor"><label><span>C</span><input id="q-option-c" placeholder="Chữ hoặc chỉ dùng ảnh"></label><div class="answer-image-tools"><label class="mini-upload">＋ Ảnh<input id="q-option-image-c" type="file" accept="image/*"></label><div id="q-option-preview-c" class="option-image-preview hidden"></div></div></div>
+    <div class="answer-editor"><label><span>D</span><input id="q-option-d" placeholder="Chữ hoặc chỉ dùng ảnh"></label><div class="answer-image-tools"><label class="mini-upload">＋ Ảnh<input id="q-option-image-d" type="file" accept="image/*"></label><div id="q-option-preview-d" class="option-image-preview hidden"></div></div></div>
+  </div><div class="form-grid compact"><label class="field">Đáp án đúng<select id="q-correct"><option>A</option><option>B</option><option>C</option><option>D</option></select></label><label class="field">Mức độ<select id="q-level"><option value="Dễ">Dễ</option><option value="Trung bình" selected>Trung bình</option><option value="Khó">Khó</option></select></label></div><label class="field">Lời giải / ghi chú<textarea id="q-explanation" placeholder="Giải thích vì sao đáp án này đúng..."></textarea></label><div class="modal-actions"><button id="btn-cancel-modal" type="button" class="btn ghost">Hủy</button><button type="submit" class="btn primary">Lưu câu hỏi</button></div></form></div></div>
+  <div id="cloze-key-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="cloze-key-title"><div class="modal-content cloze-key-modal"><div class="modal-head"><div><p class="eyebrow">ĐÁP ÁN ĐOẠN VĂN</p><h3 id="cloze-key-title">Chọn đáp án đúng cho 10 ý</h3></div><button id="cloze-key-x" type="button" class="icon-btn" aria-label="Đóng">×</button></div><p class="cloze-key-help">Bấm một phương án đúng ở mỗi hàng. Nội dung đã được tách tự động từ clipboard.</p><div id="cloze-key-list" class="cloze-key-list"></div><div class="modal-actions"><button id="cloze-key-cancel" type="button" class="btn ghost">Hủy</button><button id="cloze-key-save" type="button" class="btn primary">Tạo câu 10 ý</button></div></div></div>
+  <div id="result-modal" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-content result-modal"><div id="result-icon" class="result-icon">✓</div><p class="eyebrow">KẾT QUẢ BÀI THI</p><h3 id="result-title">Hoàn thành!</h3><div class="result-summary"><strong id="result-percent">0%</strong><span id="result-score">0/0 câu đúng</span></div><section id="analysis-panel" class="analysis-panel"><div class="analysis-heading"><div><b>Phân tích câu thường sai</b><span id="analysis-status">Đang tổng hợp dữ liệu...</span></div><span id="analysis-value">0%</span></div><div class="analysis-loading"><i id="analysis-progress"></i></div><div id="analysis-list" class="analysis-list"></div></section><div id="result-detail" class="result-detail hidden"></div><div class="modal-actions"><button id="btn-review-result" class="btn ghost">Xem chi tiết</button><button id="btn-close-result" class="btn primary">Về kho đề</button></div></div></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="login-gate" class="login-gate hidden" role="dialog" aria-modal="true" aria-labelledby="login-gate-title">
+    <div class="login-backdrop"></div>
+    <div class="login-card">
+      <div class="login-header">
+        <span class="brand-mark">Q</span>
+        <h2>QuizFlow</h2>
+      </div>
+      <h3 id="login-gate-title">Khóa Luyện Thi Đọc </h3>
+      <p class="login-subtext">Vui lòng nhập mã truy cập để tiếp tục làm bài ôn luyện.</p>
+      <form id="login-form">
+        <div class="login-field-wrap">
+          <input type="password" id="access-code-input" class="login-input" placeholder="Nhập mã truy cập..." autocomplete="current-password" autocorrect="off" autocapitalize="off" spellcheck="false" required>
+          <button type="button" id="btn-toggle-pwd" class="btn-toggle-pwd" aria-label="Hiện hoặc ẩn mã">👁</button>
+        </div>
+        <p id="login-error" class="login-error hidden">⚠️ Mã truy cập không chính xác. Vui lòng kiểm tra lại!</p>
+        <button type="submit" id="btn-submit-login" class="btn primary wide login-btn">Mở khóa làm bài</button>
+      </form>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js?v=20261120_v3"></script>
+  <script src="database.js?v=20261120_v3"></script>
+  <script src="app.js?v=20261120_v3"></script>
+</body>
+</html>
