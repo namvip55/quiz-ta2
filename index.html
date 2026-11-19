@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
   <meta name="theme-color" content="#5b45e0">
   <title>QuizFlow — Tạo và làm đề trắc nghiệm</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261120_v4">
 </head>
 <body>
   <div class="shell">
@@ -49,8 +49,9 @@
         </section>
         <section id="tab-take" class="tab-content">
           <div id="exam-selector" class="select-screen">
-            <div class="hero-row"><div><h2>Sẵn sàng chinh phục?</h2><p>Chọn một đề thi và bắt đầu khi bạn đã sẵn sàng.</p></div></div>
-            <div class="panel selector-panel"><div class="selector-icon">▶</div><h3>Chọn đề thi</h3><p>Không giới hạn thời gian — làm bài theo nhịp độ của bạn.</p><select id="exam-select" aria-label="Chọn đề thi"><option value="">— Chọn một đề thi —</option></select><button id="btn-start-exam" class="btn primary wide" disabled>Bắt đầu làm bài</button></div>
+            <div class="hero-row"><div><h2>Chọn đề thi ôn luyện B1</h2><p>Lựa chọn đề thi bên dưới để bắt đầu luyện tập theo nhịp độ của bạn.</p></div></div>
+            <div id="take-exam-cards" class="take-cards-grid"></div>
+            <div class="panel selector-panel selector-dropdown-box"><div class="selector-icon">▶</div><h3>Hoặc chọn nhanh từ danh mục</h3><select id="exam-select" aria-label="Chọn đề thi"><option value="">— Chọn một đề thi —</option></select><button id="btn-start-exam" class="btn primary wide" disabled>Bắt đầu làm bài</button></div>
           </div>
           <div id="exam-taking" class="hidden">
             <div class="exam-top"><div><p class="eyebrow">ĐANG LÀM BÀI · KHÔNG GIỚI HẠN THỜI GIAN</p><h2 id="current-exam-title"></h2></div><div class="exam-top-actions"><button id="btn-toggle-answer-map" class="btn ghost mobile-map-toggle mobile-only" type="button">📋 Phiếu trả lời</button><button id="btn-exit-exam" type="button" class="btn ghost exit-exam">Thoát bài</button></div></div>
@@ -98,8 +99,8 @@
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20261120_v3"></script>
-  <script src="database.js?v=20261120_v3"></script>
-  <script src="app.js?v=20261120_v3"></script>
+  <script src="supabase-config.js?v=20261120_v4"></script>
+  <script src="database.js?v=20261120_v4"></script>
+  <script src="app.js?v=20261120_v4"></script>
 </body>
 </html>

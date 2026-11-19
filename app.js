@@ -599,6 +599,10 @@ function clearForm() {
 function initTaking() {
   $('exam-select').addEventListener('change', event => $('btn-start-exam').disabled = !event.target.value);
   $('btn-start-exam').addEventListener('click', startExam);
+  $('take-exam-cards')?.addEventListener('click', event => {
+    const btn = event.target.closest('[data-take-id]');
+    if (btn) takeExam(btn.dataset.takeId);
+  });
   $('btn-prev').addEventListener('click', () => navigate(-1));
   $('btn-next').addEventListener('click', () => navigate(1));
   $('btn-flag').addEventListener('click', toggleFlag);
@@ -622,9 +626,8 @@ function exitExam() {
   $('exam-taking').classList.add('hidden');
   $('exam-selector').classList.remove('hidden');
   document.body.classList.remove('exam-focus');
-  $('exam-select').value = '';
-  $('btn-start-exam').disabled = true;
-  toast('Đã thoát bài. Tiến độ vẫn được lưu.');
+  updateExamSelect();
+  toast('Đã thoát bài thi. Bạn có thể chọn đề khác để làm bài.');
 }
 
 function updateExamSelect() {
@@ -636,35 +639,88 @@ function updateExamSelect() {
     $('exam-select').value = exams[0].id;
   }
   $('btn-start-exam').disabled = !$('exam-select').value;
+
+  const cardsContainer = $('take-exam-cards');
+  if (cardsContainer) {
+    if (!exams.length) {
+      cardsContainer.innerHTML = '<div class="empty-state"><span>▦</span><h3>Kho đề đang trống</h3><p>Chưa có đề thi nào trong hệ thống.</p></div>';
+    } else {
+      cardsContainer.innerHTML = exams.map(exam => {
+        const attempts = results.filter(r => r.examId === exam.id);
+        const best = attempts.length ? Math.max(...attempts.map(r => r.percent)) : null;
+        return `
+          <article class="take-exam-card">
+            <div class="take-card-top">
+              <span class="take-card-badge">ĐỀ LUYỆN THI B1</span>
+              <h3 class="take-card-title">${escapeHtml(exam.title)}</h3>
+              <p class="take-card-desc">${escapeHtml(exam.description || 'Tuyển tập bài đọc và câu hỏi ôn thi chuẩn định dạng B1.')}</p>
+            </div>
+            <div class="take-card-bottom">
+              <div class="take-card-meta">
+                <span>📝 <b>${exam.questions.length}</b> câu hỏi</span>
+                <span>⏱ Không giới hạn</span>
+                <span>🎯 Điểm đạt: ${exam.passScore ?? 60}%</span>
+                ${best !== null ? `<span>🏆 Kỷ lục: <b>${best}%</b></span>` : ''}
+              </div>
+              <button type="button" class="btn primary wide take-card-btn" data-take-id="${escapeAttr(exam.id)}">
+                ▶ Bắt đầu làm đề này
+              </button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+  }
 }
 
 function startExam() {
-  const exam = exams.find(item => item.id === $('exam-select').value);
-  if (!exam) return;
-  // Tách bản làm bài khỏi dữ liệu gốc để mọi thao tác trong phiên thi
-  // không thể vô tình thay đổi đề đã lưu.
+  const id = $('exam-select').value;
+  if (!id) return toast('Vui lòng chọn một đề thi để bắt đầu.');
+  startExamWithId(id);
+}
+
+function startExamWithId(id) {
+  const exam = exams.find(item => item.id === id);
+  if (!exam) return toast('Không tìm thấy đề thi đã chọn.');
+
+  // Tách bản làm bài khỏi dữ liệu gốc
   currentExam = structuredClone(exam);
   const saved = readJson(SESSION_KEY, null);
   const canResume = saved?.examId === exam.id && saved.answers?.length === exam.questions.length;
-  if (canResume && confirm('Bạn có một bài đang làm dở. Tiếp tục bài cũ?')) {
-    userAnswers = saved.answers; flaggedQuestions = saved.flagged || []; currentQuestionIndex = saved.index || 0;
+  if (canResume && confirm(`Bạn có một bài đang làm dở của đề "${exam.title}". Bạn có muốn tiếp tục làm bài cũ không?`)) {
+    userAnswers = saved.answers;
+    flaggedQuestions = saved.flagged || [];
+    currentQuestionIndex = saved.index || 0;
   } else {
     userAnswers = exam.questions.map(question => {
       if (question.type === 'true-false') return Array(question.statements.length).fill(null);
       if (question.type === 'cloze-bundle') return Array(question.subQuestions.length).fill(null);
       if (question.type === 'direct-fill') return Array(question.fillItems.length).fill(null);
       return null;
-    }); flaggedQuestions = Array(exam.questions.length).fill(false); currentQuestionIndex = 0;
+    });
+    flaggedQuestions = Array(exam.questions.length).fill(false);
+    currentQuestionIndex = 0;
   }
+
+  currentFilter = 'all';
+  answerLocked = false;
   trueFalsePending = null;
-  trueFalseActiveIndex = firstUnansweredTrueFalse(currentExam.questions[currentQuestionIndex], userAnswers[currentQuestionIndex]);
   clozePending = null;
-  clozeActiveIndex = firstUnansweredCloze(currentExam.questions[currentQuestionIndex], userAnswers[currentQuestionIndex]);
   directFillPending = '';
   directFillWrongIndex = -1;
   directFillActiveIndex = firstUnansweredDirectFill(currentExam.questions[currentQuestionIndex], userAnswers[currentQuestionIndex]);
-  $('exam-selector').classList.add('hidden'); $('exam-taking').classList.remove('hidden'); $('current-exam-title').textContent = exam.title; document.body.classList.add('exam-focus');
-  renderCurrentQuestion(); renderQuestionNav(); updateProgress(); saveSession();
+  trueFalseActiveIndex = firstUnansweredTrueFalse(currentExam.questions[currentQuestionIndex], userAnswers[currentQuestionIndex]);
+  clozeActiveIndex = firstUnansweredCloze(currentExam.questions[currentQuestionIndex], userAnswers[currentQuestionIndex]);
+
+  $('exam-selector').classList.add('hidden');
+  $('exam-taking').classList.remove('hidden');
+  $('current-exam-title').textContent = exam.title;
+  document.body.classList.add('exam-focus');
+
+  renderCurrentQuestion();
+  renderQuestionNav();
+  updateProgress();
+  saveSession();
 }
 
 function renderCurrentQuestion() {
@@ -1074,7 +1130,14 @@ function renderExamList() {
 }
 
 function updateStats() { const totalQuestions = exams.reduce((sum, exam) => sum + exam.questions.length, 0), avg = results.length ? Math.round(results.reduce((sum, result) => sum + result.percent, 0) / results.length) : 0; $('stats').innerHTML = `<div class="stat"><span>Tổng đề thi</span><strong>${exams.length}</strong></div><div class="stat"><span>Tổng câu hỏi</span><strong>${totalQuestions}</strong></div><div class="stat"><span>Điểm trung bình</span><strong>${avg}%</strong></div>`; }
-function takeExam(id) { switchTab('take'); $('exam-select').value = id; $('btn-start-exam').disabled = false; }
+function takeExam(id) {
+  const exam = exams.find(item => item.id === id);
+  if (!exam) return;
+  switchTab('take');
+  $('exam-select').value = id;
+  $('btn-start-exam').disabled = false;
+  startExamWithId(id);
+}
 function editExam(id) { const exam = exams.find(item => item.id === id); if (!exam) return; currentExam = structuredClone(exam); $('exam-title').value = exam.title; $('exam-desc').value = exam.description || ''; $('exam-pass').value = exam.passScore ?? 50; $('draft-badge').textContent = 'Đang chỉnh sửa'; renderQuestionsList(); switchTab('create'); }
 async function deleteExam(id) {
   const exam = exams.find(item => item.id === id);
@@ -1247,8 +1310,9 @@ async function loadFromLocalDatabase() {
         if (remoteExams && remoteExams.length) {
           exams = remoteExams;
           await syncLocalDatabase();
-          if (typeof renderExamSelector === 'function') renderExamSelector();
-          if (typeof renderExamManageList === 'function') renderExamManageList();
+          if (typeof updateExamSelect === 'function') updateExamSelect();
+          if (typeof renderExamList === 'function') renderExamList();
+          if (typeof updateStats === 'function') updateStats();
           $('save-status').textContent = '● Đã kết nối Supabase Cloud (Live)';
         }
       }).catch(e => console.warn('Lỗi kiểm tra Supabase:', e));
