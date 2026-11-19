@@ -1240,6 +1240,19 @@ async function loadFromLocalDatabase() {
 
     if (savedResults.length) results = savedResults.sort((a, b) => String(b.completedAt).localeCompare(String(a.completedAt)));
     $('save-status').textContent = '● Đã kết nối database local';
+
+    // Đồng bộ đề thi mới nhất từ Supabase Cloud nếu có kết nối
+    if (typeof loadExamsFromSupabase === 'function') {
+      loadExamsFromSupabase().then(async remoteExams => {
+        if (remoteExams && remoteExams.length) {
+          exams = remoteExams;
+          await syncLocalDatabase();
+          if (typeof renderExamSelector === 'function') renderExamSelector();
+          if (typeof renderExamManageList === 'function') renderExamManageList();
+          $('save-status').textContent = '● Đã kết nối Supabase Cloud (Live)';
+        }
+      }).catch(e => console.warn('Lỗi kiểm tra Supabase:', e));
+    }
   } catch (error) {
     console.warn('Không thể mở IndexedDB, đang dùng bộ nhớ dự phòng:', error);
     if (!exams.length && window.DEFAULT_DATA?.exams) {
