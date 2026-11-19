@@ -8,8 +8,8 @@
 // =============================================================================
 
 const SUPABASE_CONFIG = {
-  url: '',      // Ví dụ: 'https://xxxxxxxxxxxx.supabase.co'
-  anonKey: '',  // Ví dụ: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+  url: 'https://jqhyvnbvtdfhuyetuddy.supabase.co',      // Ví dụ: 'https://xxxxxxxxxxxx.supabase.co'
+  anonKey: 'sb_publishable_tsurb6gbRz5dNNa2uqGyzQ_STEOSBgi',  // Ví dụ: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
   enabled: false
 };
 
